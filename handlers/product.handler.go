@@ -2,12 +2,15 @@ package handlers
 
 import (
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/KevinStockmanns/api_golang/db"
 	"github.com/KevinStockmanns/api_golang/models"
+	"github.com/KevinStockmanns/api_golang/models/wrapper"
 	"github.com/KevinStockmanns/api_golang/utils"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -37,7 +40,6 @@ func PostProduct(c echo.Context) error {
 	if err := c.Bind(&productPost); err != nil {
 		return c.JSON(http.StatusBadRequest, err)
 	}
-
 	if err := utils.Validate.Struct(productPost); err != nil {
 		errors := utils.ValidateErrors(err.(validator.ValidationErrors))
 		if len(errors) > 0 {
@@ -46,6 +48,21 @@ func PostProduct(c echo.Context) error {
 			})
 		}
 	}
+
+	product.Name = productPost.Name
+	product.Status = productPost.Status
+	for _, v := range productPost.Versions {
+		product.Versions = append(product.Versions, models.Version{
+			Name:        v.Name,
+			Price:       v.Price,
+			ResalePrice: v.ResalePrice,
+			Status:      v.Status,
+			Date:        time.Now().UTC(),
+			Stock:       v.Stock,
+			Vistas:      0,
+		})
+	}
+
 	result := db.DB.Create(&product)
 	if result.Error != nil {
 		log.Println(result.Error)
@@ -57,4 +74,43 @@ func PostProduct(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, product)
+}
+
+func GetProducts(c echo.Context) error {
+	var products []models.Product
+
+	pageParam := c.QueryParam("page")
+	limitParam := c.QueryParam("limit")
+
+	page := 1
+	limit := 10
+
+	if pageParam != "" {
+		if p, err := strconv.Atoi(pageParam); err == nil {
+			page = p
+		}
+	}
+	if limitParam != "" {
+		if l, err := strconv.Atoi(limitParam); err == nil {
+			limit = l
+		}
+	}
+
+	offset := (page - 1) * limit
+
+	result := db.DB.Limit(limit).Offset(offset).Find(&products)
+	if result.Error != nil {
+		return c.JSON(http.StatusInternalServerError, result.Error.Error())
+	}
+
+	var total int64
+	db.DB.Model(&models.Product{}).Count(&total)
+
+	return c.JSON(http.StatusOK, wrapper.PageResponse{
+		Page:          page,
+		Size:          limit,
+		TotalPage:     int(math.Ceil(float64(total) / float64(limit))),
+		TotalElements: total,
+		Content:       products,
+	})
 }
