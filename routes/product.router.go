@@ -7,4 +7,5 @@ import (
 
 func ProductRoutes(e *echo.Echo) {
 	e.GET("/product/:id", handlers.GetProduct)
+	e.POST("/product", handlers.PostProduct)
 }
