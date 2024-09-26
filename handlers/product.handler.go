@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"log"
 	"math"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"github.com/KevinStockmanns/api_golang/models"
 	"github.com/KevinStockmanns/api_golang/models/wrapper"
 	"github.com/KevinStockmanns/api_golang/utils"
+	"github.com/KevinStockmanns/api_golang/validators"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
@@ -23,7 +25,7 @@ func GetProduct(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, "El id debe ser un número")
 	}
-	if err := db.DB.Model(&models.Product{}).First(&product, id).Error; err != nil {
+	if err := db.DB.Model(&models.Product{}).Preload("Versions").First(&product, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return c.JSON(http.StatusNotFound, "Producto no encontrado")
 		} else {
@@ -43,7 +45,7 @@ func PostProduct(c echo.Context) error {
 	if err := utils.Validate.Struct(productPost); err != nil {
 		errors := utils.ValidateErrors(err.(validator.ValidationErrors))
 		if len(errors) > 0 {
-			return c.JSON(http.StatusBadRequest, map[string][]models.ErrorWrapper{
+			return c.JSON(http.StatusBadRequest, map[string][]wrapper.ErrorWrapper{
 				"errors": errors,
 			})
 		}
@@ -93,6 +95,9 @@ func GetProducts(c echo.Context) error {
 	if limitParam != "" {
 		if l, err := strconv.Atoi(limitParam); err == nil {
 			limit = l
+			if limit > 10 {
+				limit = 10
+			}
 		}
 	}
 
@@ -106,11 +111,106 @@ func GetProducts(c echo.Context) error {
 	var total int64
 	db.DB.Model(&models.Product{}).Count(&total)
 
-	return c.JSON(http.StatusOK, wrapper.PageResponse{
+	return c.JSON(http.StatusOK, wrapper.PageWrapper{
 		Page:          page,
 		Size:          limit,
 		TotalPage:     int(math.Ceil(float64(total) / float64(limit))),
 		TotalElements: total,
 		Content:       products,
 	})
+}
+
+func PutProduct(c echo.Context) error {
+	var product models.Product
+	var productDto models.PutProduct
+	id := c.Param("id")
+	if isNum := utils.IsInt(id); !isNum {
+		return c.JSON(http.StatusBadRequest, wrapper.ErrorWrapper{Error: "el id debe ser un número entero"})
+	}
+
+	if err := c.Bind(&productDto); err != nil {
+		return c.JSON(http.StatusBadRequest, err)
+	}
+	if errors := productDto.NormalizeAndValidate(); len(errors) > 0 {
+		return c.JSON(http.StatusBadRequest, map[string][]wrapper.ErrorWrapper{
+			"errors": errors,
+		})
+	}
+
+	if err := db.DB.Preload("Versions").First(&product, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return c.JSON(http.StatusNotFound, wrapper.ErrorWrapper{Error: "producto no encontrado"})
+		} else {
+			return c.JSON(http.StatusInternalServerError, wrapper.ErrorWrapper{Error: "ocuurio un error al obtener el producto"})
+		}
+	}
+
+	if status, err := validators.PutProductValidation(product, productDto); status != http.StatusOK {
+		var errors []wrapper.ErrorWrapper
+		errors = append(errors, err)
+		responseBody, jsonErr := json.Marshal(map[string][]wrapper.ErrorWrapper{
+			"errors": errors,
+		})
+		if jsonErr != nil {
+			return c.JSON(http.StatusInternalServerError, "Error al convertir la respuesta a JSON")
+		}
+		return c.JSONBlob(status, responseBody)
+	}
+
+	if productDto.Name != nil {
+		product.Name = strings.Trim(*productDto.Name, " ")
+	}
+	if productDto.Status != nil {
+		product.Status = *productDto.Status
+	}
+	if productDto.Versions != nil {
+		for _, vDto := range *productDto.Versions {
+			switch strings.ToLower(vDto.Action) {
+			case "update":
+				for i, _ := range product.Versions {
+					if product.Versions[i].ID == *vDto.ID {
+						if vDto.Name != nil {
+							product.Versions[i].Name = strings.Trim(*vDto.Name, " ")
+						}
+						if vDto.Price != nil {
+							product.Versions[i].Price = *vDto.Price
+						}
+						if vDto.ResalePrice != nil {
+							product.Versions[i].ResalePrice = vDto.ResalePrice
+						}
+						if vDto.Status != nil {
+							product.Versions[i].Status = *vDto.Status
+						}
+						if vDto.Stock != nil {
+							product.Versions[i].Stock = *vDto.Stock
+						}
+					}
+				}
+			case "create":
+				version := models.Version{
+					Name:        strings.Trim(*vDto.Name, " "),
+					Price:       *vDto.Price,
+					ResalePrice: vDto.ResalePrice,
+					Status:      true,
+					ProductID:   product.ID,
+					Date:        time.Now().UTC(),
+					Stock:       0,
+					Vistas:      0,
+				}
+				if vDto.Stock != nil {
+					version.Stock = *vDto.Stock
+				}
+				if vDto.Status != nil {
+					version.Status = *vDto.Status
+				}
+				product.Versions = append(product.Versions, version)
+			case "delete":
+				for i, _ := range product.Versions {
+					product.Versions[i].Status = false
+				}
+			}
+		}
+	}
+	db.DB.Save(&product)
+	return c.JSON(http.StatusOK, product)
 }

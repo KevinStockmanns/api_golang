@@ -5,12 +5,12 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/KevinStockmanns/api_golang/models"
+	"github.com/KevinStockmanns/api_golang/models/wrapper"
 	"github.com/go-playground/validator/v10"
 )
 
-func ValidateErrors(err validator.ValidationErrors) []models.ErrorWrapper {
-	var errors []models.ErrorWrapper
+func ValidateErrors(err validator.ValidationErrors) []wrapper.ErrorWrapper {
+	var errors []wrapper.ErrorWrapper
 	for _, e := range err {
 		var error string
 		param := e.Param()
@@ -25,6 +25,8 @@ func ValidateErrors(err validator.ValidationErrors) []models.ErrorWrapper {
 			error = "el campo debe ser mayor a " + param
 		case "regexp":
 			error = "el cambo debe respetar este formato " + e.Param()
+		case "oneof":
+			error = "el campo solo acepta estas opciones: " + param
 		default:
 			error = "campo inválido"
 		}
@@ -33,7 +35,7 @@ func ValidateErrors(err validator.ValidationErrors) []models.ErrorWrapper {
 		if firstDotIndex != -1 {
 			field = field[firstDotIndex+1:]
 		}
-		errors = append(errors, models.ErrorWrapper{Field: strings.ToLower(field), Error: error})
+		errors = append(errors, wrapper.ErrorWrapper{Field: strings.ToLower(field), Error: error})
 	}
 	return errors
 }
@@ -55,4 +57,9 @@ func InitValidations() {
 		}
 		return matched
 	})
+}
+
+func IsInt(s string) bool {
+	re := regexp.MustCompile("^[0-9]+$")
+	return re.MatchString(s)
 }

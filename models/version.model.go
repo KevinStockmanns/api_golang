@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 type Version struct {
 	ID          uint      `json:"id" gorm:"primaryKey"`
@@ -20,4 +23,19 @@ type VersionPost struct {
 	ResalePrice *float64 `json:"resalePrice" validate:"omitempty,gt=0"`
 	Status      bool     `json:"status"`
 	Stock       uint     `json:"stock" validate:"min=0"`
+}
+
+type PutVersion struct {
+	Name        *string  `json:"name" validate:"omitempty,min=3,max=50,regexp=^[a-zA-Z0-9ñÑáéíóúÁÉÍÓÚ]+( [a-zA-Z0-9ñÑáéíóúÁÉÍÓÚ]+)*$"`
+	Price       *float64 `json:"price" validate:"omitempty,gt=0"`
+	ResalePrice *float64 `json:"resalePrice" validate:"omitempty,gt=0"`
+	Status      *bool    `json:"status"`
+	Stock       *uint    `json:"stock" validate:"omitempty,min=0"`
+	Action      string   `json:"action" validate:"required,oneof=create update delete"`
+	ID          *uint    `json:"id"`
+}
+
+func (p *PutVersion) Normalize() {
+	*p.Name = strings.Trim(*p.Name, " ")
+	p.Action = strings.ToLower(p.Action)
 }
