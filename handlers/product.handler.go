@@ -167,7 +167,7 @@ func PutProduct(c echo.Context) error {
 		for _, vDto := range *productDto.Versions {
 			switch strings.ToLower(vDto.Action) {
 			case "update":
-				for i, _ := range product.Versions {
+				for i := range product.Versions {
 					if product.Versions[i].ID == *vDto.ID {
 						if vDto.Name != nil {
 							product.Versions[i].Name = strings.Trim(*vDto.Name, " ")
@@ -205,7 +205,7 @@ func PutProduct(c echo.Context) error {
 				}
 				product.Versions = append(product.Versions, version)
 			case "delete":
-				for i, _ := range product.Versions {
+				for i := range product.Versions {
 					product.Versions[i].Status = false
 				}
 			}
