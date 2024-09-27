@@ -16,6 +16,22 @@ type Product struct {
 	Versions []Version `json:"versions"`
 }
 
+func (p *Product) Init(productPost PostProduct) {
+	p.Name = productPost.Name
+	p.Status = productPost.Status
+	for _, v := range productPost.Versions {
+		p.Versions = append(p.Versions, Version{
+			Name:        v.Name,
+			Price:       v.Price,
+			ResalePrice: v.ResalePrice,
+			Status:      v.Status,
+			Date:        time.Now().UTC(),
+			Stock:       v.Stock,
+			Vistas:      0,
+		})
+	}
+}
+
 func (p *Product) Update(productDto PutProduct) {
 	if productDto.Name != nil {
 		p.Name = strings.Trim(*productDto.Name, " ")
@@ -77,6 +93,21 @@ type PostProduct struct {
 	Name     string        `json:"name" validate:"required,min=3,max=50,regexp=^[a-zA-Z0-9ñÑáéíóúÁÉÍÓÚ]+( [a-zA-Z0-9ñÑáéíóúÁÉÍÓÚ]+)*$"`
 	Status   bool          `json:"status"`
 	Versions []VersionPost `json:"versions" validate:"required,min=1,max=6,dive"`
+}
+
+func (p *PostProduct) NormalizeAndValidate() []wrapper.ErrorWrapper {
+	p.Name = strings.Trim(p.Name, " ")
+
+	for _, v := range p.Versions {
+		v.Normalize()
+	}
+
+	if err := utils.Validate.Struct(p); err != nil {
+		errors := utils.ValidateErrors(err.(validator.ValidationErrors))
+		return errors
+	}
+
+	return make([]wrapper.ErrorWrapper, 0)
 }
 
 type PutProduct struct {

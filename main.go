@@ -13,9 +13,9 @@ func main() {
 	db.Connection()
 	db.DB.AutoMigrate(models.Product{}, models.Version{})
 	e := echo.New()
-
-	routes.Index(e)
-	routes.ProductRoutes(e)
+	v1 := e.Group("/v1")
+	routes.Index(v1)
+	routes.ProductRoutes(v1)
 
 	e.Logger.Fatal(e.Start(":8080"))
 

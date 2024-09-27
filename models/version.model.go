@@ -25,6 +25,10 @@ type VersionPost struct {
 	Stock       uint     `json:"stock" validate:"min=0"`
 }
 
+func (v *VersionPost) Normalize() {
+	v.Name = strings.Trim(v.Name, " ")
+}
+
 type PutVersion struct {
 	Name        *string  `json:"name" validate:"omitempty,min=3,max=50,regexp=^[a-zA-Z0-9ñÑáéíóúÁÉÍÓÚ]+( [a-zA-Z0-9ñÑáéíóúÁÉÍÓÚ]+)*$"`
 	Price       *float64 `json:"price" validate:"omitempty,gt=0"`

@@ -11,7 +11,8 @@ import (
 func PutProductValidation(product models.Product, productDto models.PutProduct) (int, wrapper.ErrorWrapper) {
 	validators := []ValidationFunc{
 		validateActions(productDto),
-		UniqueField(product, "name", productDto.Name, "el nombre del producto se encuentra en uso"),
+		dataRequired(productDto),
+		UniqueValieInDB(product, "name", productDto.Name, "el nombre del producto se encuentra en uso"),
 		hasOneVersionActive(product, productDto),
 		idCorrespondient(product, productDto),
 	}
@@ -94,6 +95,23 @@ func idCorrespondient(product models.Product, productDto models.PutProduct) Vali
 			}
 			if !find {
 				return http.StatusNotFound, wrapper.ErrorWrapper{Field: "versions[" + strconv.Itoa(i) + "].id", Error: "el id no coincide con una versión del producto"}
+			}
+		}
+
+		return http.StatusOK, wrapper.ErrorWrapper{}
+	}
+}
+func dataRequired(productDto models.PutProduct) ValidationFunc {
+	return func() (int, wrapper.ErrorWrapper) {
+
+		if productDto.Name == nil && productDto.Status == nil && productDto.Versions == nil {
+			return http.StatusBadRequest, wrapper.ErrorWrapper{Error: "los datos son requeridos para actualizar"}
+		}
+		if productDto.Versions != nil {
+			for i, vDto := range *productDto.Versions {
+				if vDto.Name == nil && vDto.Price == nil && vDto.ResalePrice == nil && vDto.Status == nil && vDto.Stock == nil {
+					return http.StatusBadRequest, wrapper.ErrorWrapper{Field: "versions[" + strconv.Itoa(i) + "]", Error: "los datos son requeridos para actualizar la versión"}
+				}
 			}
 		}
 

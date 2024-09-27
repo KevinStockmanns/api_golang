@@ -9,7 +9,7 @@ import (
 
 type ValidationFunc func() (int, wrapper.ErrorWrapper)
 
-func UniqueField(model interface{}, column string, value *string, errorText string) ValidationFunc {
+func UniqueValieInDB(model interface{}, column string, value *string, errorText string) ValidationFunc {
 	return func() (int, wrapper.ErrorWrapper) {
 		if value == nil {
 			return http.StatusOK, wrapper.ErrorWrapper{}

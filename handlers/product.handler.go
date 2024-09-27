@@ -2,19 +2,18 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"math"
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/KevinStockmanns/api_golang/db"
 	"github.com/KevinStockmanns/api_golang/models"
 	"github.com/KevinStockmanns/api_golang/models/wrapper"
 	"github.com/KevinStockmanns/api_golang/utils"
 	"github.com/KevinStockmanns/api_golang/validators"
-	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
@@ -42,28 +41,18 @@ func PostProduct(c echo.Context) error {
 	if err := c.Bind(&productPost); err != nil {
 		return c.JSON(http.StatusBadRequest, err)
 	}
-	if err := utils.Validate.Struct(productPost); err != nil {
-		errors := utils.ValidateErrors(err.(validator.ValidationErrors))
-		if len(errors) > 0 {
-			return c.JSON(http.StatusBadRequest, map[string][]wrapper.ErrorWrapper{
-				"errors": errors,
-			})
-		}
-	}
-
-	product.Name = productPost.Name
-	product.Status = productPost.Status
-	for _, v := range productPost.Versions {
-		product.Versions = append(product.Versions, models.Version{
-			Name:        v.Name,
-			Price:       v.Price,
-			ResalePrice: v.ResalePrice,
-			Status:      v.Status,
-			Date:        time.Now().UTC(),
-			Stock:       v.Stock,
-			Vistas:      0,
+	if errors := productPost.NormalizeAndValidate(); len(errors) > 0 {
+		return c.JSON(http.StatusBadRequest, map[string][]wrapper.ErrorWrapper{
+			"errors": errors,
 		})
 	}
+	if status, err := validators.PostValidations(productPost); status != http.StatusOK {
+		errors := wrapper.ErrorsWrapper{}
+		errors.AddEror(err)
+		return c.JSON(status, errors)
+	}
+
+	product.Init(productPost)
 
 	result := db.DB.Create(&product)
 	if result.Error != nil {
@@ -74,8 +63,9 @@ func PostProduct(c echo.Context) error {
 			return c.JSON(http.StatusInternalServerError, "error al agregar")
 		}
 	}
+	c.Response().Header().Set("Location", fmt.Sprintf("/product/%d", product.ID))
 
-	return c.JSON(http.StatusOK, product)
+	return c.JSON(http.StatusCreated, nil)
 }
 
 func GetProducts(c echo.Context) error {
@@ -157,7 +147,50 @@ func PutProduct(c echo.Context) error {
 		return c.JSONBlob(status, responseBody)
 	}
 
+	tx := db.DB.Begin()
+
 	product.Update(productDto)
-	db.DB.Save(&product)
+	if err := db.DB.Save(&product).Error; err != nil {
+		tx.Rollback()
+		return c.JSON(http.StatusInternalServerError, "ocurrio un error al guardar los cambios")
+	}
+	if len(product.Versions) > 6 {
+		tx.Rollback()
+		errors := wrapper.ErrorsWrapper{}
+		errors.AddNewError("versions", "el producto puede tener hasta 6 versiones")
+		return c.JSON(http.StatusBadRequest, errors)
+	}
+
+	tx.Commit()
 	return c.JSON(http.StatusOK, product)
+}
+
+func DeleteProduct(c echo.Context) error {
+	id := c.Param("id")
+	var product models.Product
+	if !utils.IsInt(id) {
+		errors := wrapper.ErrorsWrapper{}
+		errors.AddNewError("", "el id ingresado no es un número entero")
+		return c.JSON(http.StatusBadRequest, errors)
+	}
+
+	if err := db.DB.First(&product, id).Error; err != nil {
+		errors := wrapper.ErrorsWrapper{}
+		if err == gorm.ErrRecordNotFound {
+			errors.AddNewError("", "el producto no se encontro con el id ingresado")
+			return c.JSON(http.StatusNotFound, errors)
+		} else {
+			errors.AddNewError("", "ocurrio un error al buscar el producto")
+			return c.JSON(http.StatusInternalServerError, errors)
+		}
+	}
+
+	product.Status = false
+	if err := db.DB.Save(&product).Error; err != nil {
+		errors := wrapper.ErrorsWrapper{}
+		errors.AddNewError("", "ocurrio un error al realizar los cambios")
+		return c.JSON(http.StatusInternalServerError, errors)
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }

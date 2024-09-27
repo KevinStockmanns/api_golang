@@ -5,6 +5,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func Index(e *echo.Echo) {
+func Index(e *echo.Group) {
 	e.GET("/", handlers.Index)
 }
