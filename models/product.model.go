@@ -18,11 +18,11 @@ type Product struct {
 }
 
 func (p *Product) Init(productPost PostProduct) {
-	p.Name = productPost.Name
+	p.Name = strings.Trim(productPost.Name, " ")
 	p.Status = productPost.Status
 	for _, v := range productPost.Versions {
 		p.Versions = append(p.Versions, Version{
-			Name:        v.Name,
+			Name:        strings.Trim(v.Name, " "),
 			Price:       v.Price,
 			ResalePrice: v.ResalePrice,
 			Status:      v.Status,

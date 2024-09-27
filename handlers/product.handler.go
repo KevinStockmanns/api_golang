@@ -65,7 +65,7 @@ func PostProduct(c echo.Context) error {
 	}
 	c.Response().Header().Set("Location", fmt.Sprintf("/product/%d", product.ID))
 
-	return c.JSON(http.StatusCreated, nil)
+	return c.JSON(http.StatusCreated, product)
 }
 
 func GetProducts(c echo.Context) error {
