@@ -11,12 +11,12 @@ import (
 func main() {
 	utils.InitValidations()
 	db.Connection()
-	db.DB.AutoMigrate(models.Product{}, models.Version{})
+	db.DB.AutoMigrate(models.Product{}, models.Version{}, models.PriceHistory{})
 	e := echo.New()
+
 	v1 := e.Group("/v1")
 	routes.Index(v1)
-	routes.ProductRoutes(v1)
+	routes.ProductRoutes(e)
 
 	e.Logger.Fatal(e.Start(":8080"))
-
 }

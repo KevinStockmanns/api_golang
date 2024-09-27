@@ -7,6 +7,7 @@ import (
 	"github.com/KevinStockmanns/api_golang/models/wrapper"
 	"github.com/KevinStockmanns/api_golang/utils"
 	"github.com/go-playground/validator/v10"
+	"gorm.io/gorm"
 )
 
 type Product struct {
@@ -32,7 +33,7 @@ func (p *Product) Init(productPost PostProduct) {
 	}
 }
 
-func (p *Product) Update(productDto PutProduct) {
+func (p *Product) Update(productDto PutProduct, tx *gorm.DB) {
 	if productDto.Name != nil {
 		p.Name = strings.Trim(*productDto.Name, " ")
 	}
@@ -40,11 +41,17 @@ func (p *Product) Update(productDto PutProduct) {
 		p.Status = *productDto.Status
 	}
 	if productDto.Versions != nil {
+		var historyPrices []PriceHistory
 		for _, vDto := range *productDto.Versions {
 			switch strings.ToLower(vDto.Action) {
 			case "update":
 				for i := range p.Versions {
 					if p.Versions[i].ID == *vDto.ID {
+						if vDto.Price != nil || vDto.ResalePrice != nil {
+							history := PriceHistory{}
+							history.Init(p.Versions[i])
+							historyPrices = append(historyPrices, history)
+						}
 						if vDto.Name != nil {
 							p.Versions[i].Name = strings.Trim(*vDto.Name, " ")
 						}
@@ -79,6 +86,7 @@ func (p *Product) Update(productDto PutProduct) {
 				if vDto.Status != nil {
 					version.Status = *vDto.Status
 				}
+				tx.Create(&version)
 				p.Versions = append(p.Versions, version)
 			case "delete":
 				for i := range p.Versions {
@@ -86,6 +94,11 @@ func (p *Product) Update(productDto PutProduct) {
 				}
 			}
 		}
+
+		if len(historyPrices) > 0 {
+			tx.Create(&historyPrices)
+		}
+		tx.Save(&p.Versions)
 	}
 }
 

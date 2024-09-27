@@ -149,8 +149,8 @@ func PutProduct(c echo.Context) error {
 
 	tx := db.DB.Begin()
 
-	product.Update(productDto)
-	if err := db.DB.Save(&product).Error; err != nil {
+	product.Update(productDto, tx)
+	if err := tx.Save(&product).Error; err != nil {
 		tx.Rollback()
 		return c.JSON(http.StatusInternalServerError, "ocurrio un error al guardar los cambios")
 	}
