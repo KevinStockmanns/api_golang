@@ -36,6 +36,8 @@ type PutVersion struct {
 }
 
 func (p *PutVersion) Normalize() {
-	*p.Name = strings.Trim(*p.Name, " ")
+	if p.Name != nil {
+		*p.Name = strings.Trim(*p.Name, " ")
+	}
 	p.Action = strings.ToLower(p.Action)
 }

@@ -157,60 +157,7 @@ func PutProduct(c echo.Context) error {
 		return c.JSONBlob(status, responseBody)
 	}
 
-	if productDto.Name != nil {
-		product.Name = strings.Trim(*productDto.Name, " ")
-	}
-	if productDto.Status != nil {
-		product.Status = *productDto.Status
-	}
-	if productDto.Versions != nil {
-		for _, vDto := range *productDto.Versions {
-			switch strings.ToLower(vDto.Action) {
-			case "update":
-				for i := range product.Versions {
-					if product.Versions[i].ID == *vDto.ID {
-						if vDto.Name != nil {
-							product.Versions[i].Name = strings.Trim(*vDto.Name, " ")
-						}
-						if vDto.Price != nil {
-							product.Versions[i].Price = *vDto.Price
-						}
-						if vDto.ResalePrice != nil {
-							product.Versions[i].ResalePrice = vDto.ResalePrice
-						}
-						if vDto.Status != nil {
-							product.Versions[i].Status = *vDto.Status
-						}
-						if vDto.Stock != nil {
-							product.Versions[i].Stock = *vDto.Stock
-						}
-					}
-				}
-			case "create":
-				version := models.Version{
-					Name:        strings.Trim(*vDto.Name, " "),
-					Price:       *vDto.Price,
-					ResalePrice: vDto.ResalePrice,
-					Status:      true,
-					ProductID:   product.ID,
-					Date:        time.Now().UTC(),
-					Stock:       0,
-					Vistas:      0,
-				}
-				if vDto.Stock != nil {
-					version.Stock = *vDto.Stock
-				}
-				if vDto.Status != nil {
-					version.Status = *vDto.Status
-				}
-				product.Versions = append(product.Versions, version)
-			case "delete":
-				for i := range product.Versions {
-					product.Versions[i].Status = false
-				}
-			}
-		}
-	}
+	product.Update(productDto)
 	db.DB.Save(&product)
 	return c.JSON(http.StatusOK, product)
 }
