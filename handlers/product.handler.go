@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -72,40 +71,16 @@ func GetProducts(c echo.Context) error {
 	var products []models.Product
 
 	pageParam := c.QueryParam("page")
-	limitParam := c.QueryParam("limit")
+	sizeParam := c.QueryParam("limit")
 
-	page := 1
-	limit := 10
-
-	if pageParam != "" {
-		if p, err := strconv.Atoi(pageParam); err == nil {
-			page = p
-		}
-	}
-	if limitParam != "" {
-		if l, err := strconv.Atoi(limitParam); err == nil {
-			limit = l
-			if limit > 10 {
-				limit = 10
-			}
-		}
-	}
-
-	offset := (page - 1) * limit
-
-	result := db.DB.Limit(limit).Offset(offset).Find(&products)
-	if result.Error != nil {
-		return c.JSON(http.StatusInternalServerError, result.Error.Error())
-	}
-
-	var total int64
-	db.DB.Model(&models.Product{}).Count(&total)
+	pagination := utils.InitPagination(pageParam, sizeParam, 10)
+	pagination.Query(&products, []string{"Versions"}, "status = ?", true)
 
 	return c.JSON(http.StatusOK, wrapper.PageWrapper{
-		Page:          page,
-		Size:          limit,
-		TotalPage:     int(math.Ceil(float64(total) / float64(limit))),
-		TotalElements: total,
+		Page:          pagination.Page,
+		Size:          pagination.Size,
+		TotalPage:     int(pagination.TotalPages),
+		TotalElements: pagination.TotalElements,
 		Content:       products,
 	})
 }
