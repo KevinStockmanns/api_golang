@@ -10,6 +10,7 @@ import (
 
 	"github.com/KevinStockmanns/api_golang/db"
 	"github.com/KevinStockmanns/api_golang/models"
+	"github.com/KevinStockmanns/api_golang/models/dto"
 	"github.com/KevinStockmanns/api_golang/models/wrapper"
 	"github.com/KevinStockmanns/api_golang/utils"
 	"github.com/KevinStockmanns/api_golang/validators"
@@ -30,7 +31,7 @@ func GetProduct(c echo.Context) error {
 			return c.JSON(http.StatusInternalServerError, "Error al buscar el producto")
 		}
 	}
-	return c.JSON(200, &product)
+	return c.JSON(200, dto.InitProduct(product))
 }
 
 func PostProduct(c echo.Context) error {
@@ -76,12 +77,17 @@ func GetProducts(c echo.Context) error {
 	pagination := utils.InitPagination(pageParam, sizeParam, 10)
 	pagination.Query(&products, []string{"Versions"}, "status = ?", true)
 
+	var productsDto []dto.ProductResponse
+	for i := range products {
+		productsDto = append(productsDto, *dto.InitProduct(products[i]))
+	}
+
 	return c.JSON(http.StatusOK, wrapper.PageWrapper{
 		Page:          pagination.Page,
 		Size:          pagination.Size,
 		TotalPage:     int(pagination.TotalPages),
 		TotalElements: pagination.TotalElements,
-		Content:       products,
+		Content:       productsDto,
 	})
 }
 
