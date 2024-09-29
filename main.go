@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/KevinStockmanns/api_golang/db"
+	"github.com/KevinStockmanns/api_golang/middlewares"
 	"github.com/KevinStockmanns/api_golang/models"
 	"github.com/KevinStockmanns/api_golang/routes"
 	"github.com/KevinStockmanns/api_golang/utils"
@@ -13,6 +14,8 @@ func main() {
 	db.Connection()
 	db.DB.AutoMigrate(models.Product{}, models.Version{}, models.PriceHistory{})
 	e := echo.New()
+
+	e.Use(middlewares.JwtMiddleWare)
 
 	v1 := e.Group("/v1")
 	routes.Index(v1)
