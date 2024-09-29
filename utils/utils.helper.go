@@ -27,6 +27,8 @@ func ValidateErrors(err validator.ValidationErrors) []wrapper.ErrorWrapper {
 			error = "el cambo debe respetar este formato " + e.Param()
 		case "oneof":
 			error = "el campo solo acepta estas opciones: " + param
+		case "email":
+			error = "el correo es inválido"
 		default:
 			error = "campo inválido"
 		}
