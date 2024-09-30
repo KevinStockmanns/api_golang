@@ -9,7 +9,7 @@ import (
 
 func UserValidations(user models.User, data dtos.UserPostDTO) (int, dtos.ErrorsDTO) {
 	validations := []ValidationFunc{
-		UniqueValueInDB(data, "email", data.Email, "el correo ya se encuentra en uso"),
+		UniqueValueInDB(user, "email", data.Email, "el correo ya se encuentra en uso"),
 	}
 
 	for _, v := range validations {

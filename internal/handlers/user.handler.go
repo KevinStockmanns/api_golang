@@ -38,9 +38,14 @@ func UserPost(c echo.Context) error {
 		return c.JSON(status, errs)
 	}
 
-	if err := db.DB.Create(&user).Error; err != nil {
+	tx := db.DB.Begin()
+
+	if err := tx.Create(&user).Error; err != nil {
+		tx.Rollback()
 		return c.JSON(http.StatusInternalServerError, err)
 	}
+
+	tx.Commit()
 
 	c.Response().Header().Set("Location", fmt.Sprintf("/user/%d", user.ID))
 	return c.JSON(http.StatusCreated, user)
