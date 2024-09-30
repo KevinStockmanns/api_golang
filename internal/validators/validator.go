@@ -17,7 +17,7 @@ func UniqueValueInDB(model interface{}, tableName string, value string, textErro
 		if count > 0 {
 			errors := dtos.ErrorsDTO{
 				Errors: []dtos.ErrorDTO{
-					dtos.ErrorDTO{Field: tableName, Error: textError},
+					{Field: tableName, Error: textError},
 				},
 			}
 
