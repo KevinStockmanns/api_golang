@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -16,13 +17,15 @@ func UserPost(c echo.Context) error {
 	var userDto dtos.UserPostDTO
 
 	if err := c.Bind(&userDto); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"message": "no se pudo leer el cuerpo enviado",
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+			Message: "no se puedo leer el cuerpo de la petición",
 		})
 	}
-	userDto.Normalize()
 	if errors, ok := validators.ValidateDTOs(userDto); !ok {
-		return c.JSON(http.StatusBadRequest, errors)
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+			Message: "errores de validación",
+			Errors:  errors.Errors,
+		})
 	}
 	bDay, _ := time.Parse("2006-01-02", userDto.Birthday)
 	user := models.User{
@@ -34,15 +37,22 @@ func UserPost(c echo.Context) error {
 		Status:   true,
 		Phone:    userDto.Phone,
 	}
+	user.Normalize()
 	if status, errs := validators.UserValidations(user, userDto); status != http.StatusOK {
-		return c.JSON(status, errs)
+		return c.JSON(status, dtos.ErrorResponse{
+			Message: "errores de validación",
+			Errors:  errs.Errors,
+		})
 	}
 
 	tx := db.DB.Begin()
 
 	if err := tx.Create(&user).Error; err != nil {
 		tx.Rollback()
-		return c.JSON(http.StatusInternalServerError, err)
+		log.Println(err)
+		return c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
+			Message: "Ocurrio un error al crear el usuario en la base de datos",
+		})
 	}
 
 	tx.Commit()

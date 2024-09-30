@@ -36,7 +36,7 @@ func requiredAge(requiredAge int8, date time.Time, field string) ValidationFunc 
 
 		if age < requiredAge {
 			return http.StatusBadRequest, dtos.ErrorsDTO{Errors: []dtos.ErrorDTO{
-				{Field: field, Error: fmt.Sprintf("la edad mínima requerida es de %f años", requiredAge)},
+				{Field: field, Error: fmt.Sprintf("la edad mínima requerida es de %d años", requiredAge)},
 			}}
 		}
 
