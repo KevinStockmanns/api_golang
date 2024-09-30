@@ -10,4 +10,5 @@ type User struct {
 	Password string    `json:"password" gorm:"type:varchar(255)"`
 	Birthday time.Time `json:"birthday" gorm:"type:date"`
 	Status   bool      `json:"status"`
+	Phone    string    `json:"phone" gorm:"type:varchar(30)"`
 }
