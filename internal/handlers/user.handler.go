@@ -8,6 +8,7 @@ import (
 
 	"github.com/KevinStockmanns/api_golang/internal/db"
 	"github.com/KevinStockmanns/api_golang/internal/dtos"
+	"github.com/KevinStockmanns/api_golang/internal/encryptor"
 	"github.com/KevinStockmanns/api_golang/internal/models"
 	"github.com/KevinStockmanns/api_golang/internal/validators"
 	"github.com/labstack/echo/v4"
@@ -33,7 +34,7 @@ func UserPost(c echo.Context) error {
 		LastName: userDto.LastName,
 		Email:    userDto.Email,
 		Birthday: bDay,
-		Password: userDto.Password,
+		Password: encryptor.EncryptPassword(userDto.Password),
 		Status:   true,
 		Phone:    userDto.Phone,
 	}
