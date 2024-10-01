@@ -11,5 +11,5 @@ type ErrorsDTO struct {
 
 type ErrorResponse struct {
 	Message string     `json:"message"`
-	Errors  []ErrorDTO `json:"errors"`
+	Errors  []ErrorDTO `json:"errors,omitempty"`
 }
