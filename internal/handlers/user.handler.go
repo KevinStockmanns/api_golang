@@ -58,6 +58,23 @@ func UserPost(c echo.Context) error {
 
 	tx.Commit()
 
+	token, err := encryptor.GenerateJWT(user.Email)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "error al crear token de seguridad")
+	}
+	userResponse := dtos.UserWithTokenResponseDTO{
+		Token: token,
+		UserResponseDTO: dtos.UserResponseDTO{
+			ID:       user.ID,
+			Name:     user.Name,
+			LastName: user.LastName,
+			Email:    user.Email,
+			Birthday: user.Birthday,
+			Status:   user.Status,
+			Phone:    user.Phone,
+		},
+	}
+
 	c.Response().Header().Set("Location", fmt.Sprintf("/user/%d", user.ID))
-	return c.JSON(http.StatusCreated, user)
+	return c.JSON(http.StatusCreated, userResponse)
 }
