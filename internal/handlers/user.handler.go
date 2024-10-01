@@ -70,7 +70,7 @@ func UserSignUp(c echo.Context) error {
 
 	tx.Commit()
 
-	token, err := encryptor.GenerateJWT(user.Email)
+	token, err := encryptor.GenerateJWT(user.Email, user.Rol.Name)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "error al crear token de seguridad")
 	}
@@ -124,7 +124,7 @@ func UserLogin(c echo.Context) error {
 		})
 	}
 
-	token, _ := encryptor.GenerateJWT(user.Email)
+	token, _ := encryptor.GenerateJWT(user.Email, user.Rol.Name)
 	return c.JSON(http.StatusOK, dtos.UserWithTokenResponseDTO{
 		Token: token,
 		UserResponseDTO: dtos.UserResponseDTO{

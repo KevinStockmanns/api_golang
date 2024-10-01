@@ -11,14 +11,15 @@ import (
 var jwtSecret = []byte("tu_secreta_clave") // Cambia esto por una clave segura
 
 type Claims struct {
-	Username string `json:"username,omitempty"`
+	Rol string `json:"rol,omitempty"`
 	jwt.RegisteredClaims
 }
 
-func GenerateJWT(username string) (string, error) {
+func GenerateJWT(username string, rol string) (string, error) {
 	expiratedToken := time.Now().Add(4 * time.Hour)
 
 	claims := &Claims{
+		Rol: rol,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiratedToken),
 			Subject:   username,
