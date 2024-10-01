@@ -9,7 +9,7 @@ import (
 	"github.com/KevinStockmanns/api_golang/internal/models"
 )
 
-func UserValidations(user models.User, data dtos.UserPostDTO) (int, dtos.ErrorsDTO) {
+func UserValidations(user models.User, data dtos.UserSignUpDTO) (int, dtos.ErrorsDTO) {
 	validations := []ValidationFunc{
 		UniqueValueInDB(user, "email", data.Email, "el correo ya se encuentra en uso"),
 		requiredAge(18, user.Birthday, "birthday"),

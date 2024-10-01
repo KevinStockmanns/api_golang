@@ -10,8 +10,8 @@ func RegisterRoutes(e *echo.Echo) {
 	v1 := e.Group("/v1")
 
 	// User´s Endpoint
-	v1.POST("/user/register", handlers.UserPost)
-
+	v1.POST("/user/signup", handlers.UserSignUp)
+	v1.POST("/user/login", handlers.UserLogin)
 
 	v1.POST("/product", handlers.ProductPost, middlewares.JwtMiddleware)
 }

@@ -34,6 +34,10 @@ func InitValidations() {
 		matched, _ := regexp.MatchString("^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9]+([ '-][A-Za-zÁÉÍÓÚáéíóúÑñ0-9]+)*$", fl.Field().String())
 		return matched
 	})
+	Validate.RegisterValidation("password", func(fl validator.FieldLevel) bool {
+		matched, _ := regexp.MatchString("^[a-zA-Z0-9 _-]*$", fl.Field().String())
+		return matched
+	})
 }
 
 func ValidateDTOs(model interface{}) (dtos.ErrorsDTO, bool) {
@@ -59,6 +63,10 @@ func ValidateDTOs(model interface{}) (dtos.ErrorsDTO, bool) {
 				errorDto.Error = "el dato acepta solo letras y espacios en blanco"
 			case "objectname":
 				errorDto.Error = "el dato acepta solo letras, números y espacios en blanco"
+			case "password":
+				{
+					errorDto.Error = "el campo acepta, letras, números y caracteres especiales: ('_', '-' )"
+				}
 			default:
 				errorDto.Error = "Dato inválido"
 
