@@ -19,6 +19,7 @@ type UserResponseDTO struct {
 	Birthday time.Time `json:"birthday"`
 	Status   bool      `json:"status"`
 	Phone    string    `json:"phone"`
+	Rol      string    `json:"rol"`
 }
 
 type UserWithTokenResponseDTO struct {

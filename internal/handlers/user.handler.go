@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/KevinStockmanns/api_golang/internal/constants"
 	"github.com/KevinStockmanns/api_golang/internal/db"
 	"github.com/KevinStockmanns/api_golang/internal/dtos"
 	"github.com/KevinStockmanns/api_golang/internal/encryptor"
 	"github.com/KevinStockmanns/api_golang/internal/models"
+	"github.com/KevinStockmanns/api_golang/internal/services"
 	"github.com/KevinStockmanns/api_golang/internal/validators"
 	"github.com/labstack/echo/v4"
 )
@@ -48,6 +50,14 @@ func UserPost(c echo.Context) error {
 
 	tx := db.DB.Begin()
 
+	var rol models.Rol
+	if err := services.GetOrCreateRol(&rol, string(constants.User)); err != nil {
+		return c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
+			Message: "ocurrio un error al crear el usuario",
+		})
+	}
+	user.RolId = rol.ID
+
 	if err := tx.Create(&user).Error; err != nil {
 		tx.Rollback()
 		log.Println(err)
@@ -62,6 +72,7 @@ func UserPost(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "error al crear token de seguridad")
 	}
+
 	userResponse := dtos.UserWithTokenResponseDTO{
 		Token: token,
 		UserResponseDTO: dtos.UserResponseDTO{
@@ -72,6 +83,7 @@ func UserPost(c echo.Context) error {
 			Birthday: user.Birthday,
 			Status:   user.Status,
 			Phone:    user.Phone,
+			Rol:      rol.Name,
 		},
 	}
 
