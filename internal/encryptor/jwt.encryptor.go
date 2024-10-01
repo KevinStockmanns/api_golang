@@ -1,6 +1,8 @@
 package encryptor
 
 import (
+	"errors"
+	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -9,7 +11,7 @@ import (
 var jwtSecret = []byte("tu_secreta_clave") // Cambia esto por una clave segura
 
 type Claims struct {
-	Username string `json:"username"`
+	Username string `json:"username,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -17,9 +19,9 @@ func GenerateJWT(username string) (string, error) {
 	expiratedToken := time.Now().Add(4 * time.Hour)
 
 	claims := &Claims{
-		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiratedToken),
+			Subject:   username,
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -28,4 +30,24 @@ func GenerateJWT(username string) (string, error) {
 		return "", err
 	}
 	return tokenString, err
+}
+
+func VerifyJWT(tokenString string) (*Claims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		return jwtSecret, nil
+	})
+
+	if err != nil {
+		log.Println(err)
+		if err == jwt.ErrSignatureInvalid {
+			return nil, errors.New("firma del token inválida")
+		}
+		return nil, errors.New("token inválido")
+	}
+
+	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, errors.New("token no válido")
 }
