@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"log"
 	"net/http"
 	"strings"
 
@@ -14,7 +13,7 @@ func JwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		authHeader := c.Request().Header.Get("Authorization")
 
-		log.Println(authHeader)
+		// log.Println(authHeader)
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 			return c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{Message: "el token de seguridad es requerido"})
 		}

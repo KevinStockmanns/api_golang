@@ -7,3 +7,9 @@ const (
 	Admin      UserRole = "ADMIN"
 	User       UserRole = "USER"
 )
+
+var UserRoles = map[UserRole]bool{
+	SuperAdmin: true,
+	Admin:      true,
+	User:       true,
+}

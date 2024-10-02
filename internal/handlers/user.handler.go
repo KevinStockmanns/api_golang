@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/KevinStockmanns/api_golang/internal/constants"
@@ -12,6 +14,7 @@ import (
 	"github.com/KevinStockmanns/api_golang/internal/encryptor"
 	"github.com/KevinStockmanns/api_golang/internal/models"
 	"github.com/KevinStockmanns/api_golang/internal/services"
+	"github.com/KevinStockmanns/api_golang/internal/utils"
 	"github.com/KevinStockmanns/api_golang/internal/validators"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
@@ -133,17 +136,76 @@ func UserLogin(c echo.Context) error {
 	}
 
 	token, _ := encryptor.GenerateJWT(user.Email, user.Rol.Name)
+
+	var userResponse dtos.UserResponseDTO
+	userResponse.Init(user)
 	return c.JSON(http.StatusOK, dtos.UserWithTokenResponseDTO{
-		Token: token,
-		UserResponseDTO: dtos.UserResponseDTO{
-			ID:       user.ID,
-			Name:     user.Name,
-			LastName: user.LastName,
-			Email:    user.Email,
-			Birthday: user.Birthday,
-			Status:   user.Status,
-			Phone:    user.Phone,
-			Rol:      user.Rol.Name,
-		},
+		Token:           token,
+		UserResponseDTO: userResponse,
 	})
+}
+
+func UserUpdate(c echo.Context) error {
+	var userDto dtos.UserUpdateDTO
+	id := c.Param("id")
+	if !utils.IsInteger(id) {
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+			Message: "el id debe ser un número entero",
+		})
+	}
+	if err := c.Bind(&userDto); err != nil {
+		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+			Message: "ocurrio un probelma al leer el cuerpo de la petición",
+		})
+	}
+	if errs, ok := validators.ValidateDTOs(userDto); !ok {
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+			Message: "error de validación",
+			Errors:  errs.Errors,
+		})
+	}
+	var user models.User
+	if err := db.DB.Model(user).Preload("Rol").First(&user, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return c.JSON(http.StatusNotFound, dtos.ErrorResponse{
+				Message: "el usuario no se encuentra en la base de datos",
+			})
+		} else {
+			return c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
+				Message: "ocurrio un error al obtener el usuairo",
+			})
+		}
+	}
+	idNum, _ := strconv.ParseUint(id, 10, 32)
+
+	if status, errs := validators.UserUpdate(user, userDto, uint(idNum)); status != http.StatusOK {
+		return c.JSON(status, dtos.ErrorResponse{
+			Message: "error de validación",
+			Errors:  errs.Errors,
+		})
+	}
+
+	tx := db.DB.Begin()
+	user.Update(userDto)
+	if userDto.Rol != nil {
+		var rol models.Rol
+		if err := services.GetOrCreateRol(&rol, strings.ToUpper(*userDto.Rol)); err != nil {
+			return c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Message: "ocurrio un error al actualizar el rol"})
+		}
+		user.Rol = rol
+	}
+
+	if err := tx.Save(&user).Error; err != nil {
+		tx.Rollback()
+		return c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
+			Message: "ocurrio un error al guardar el usuario",
+		})
+	}
+
+	tx.Commit()
+
+	var userResponse dtos.UserResponseDTO
+	userResponse.Init(user)
+
+	return c.JSON(http.StatusOK, userResponse)
 }
