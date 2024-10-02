@@ -43,7 +43,7 @@ func UserSignUp(c echo.Context) error {
 		Phone:    userDto.Phone,
 	}
 	user.Normalize()
-	if status, errs := validators.UserValidations(user, userDto); status != http.StatusOK {
+	if status, errs := validators.UserSignUp(user, userDto); status != http.StatusOK {
 		return c.JSON(status, dtos.ErrorResponse{
 			Message: "errores de validación",
 			Errors:  errs.Errors,
@@ -118,6 +118,14 @@ func UserLogin(c echo.Context) error {
 			})
 		}
 	}
+
+	if stats, errs := validators.UserLogin(user, userDto); stats != http.StatusOK {
+		return c.JSON(stats, dtos.ErrorResponse{
+			Message: "errores de validación",
+			Errors:  errs.Errors,
+		})
+	}
+
 	if err := encryptor.VerifyPassword(userDto.Password, user.Password); err != nil {
 		return c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{
 			Message: "credenciales inválidas",

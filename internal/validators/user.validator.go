@@ -5,11 +5,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/KevinStockmanns/api_golang/internal/constants"
 	"github.com/KevinStockmanns/api_golang/internal/dtos"
 	"github.com/KevinStockmanns/api_golang/internal/models"
 )
 
-func UserValidations(user models.User, data dtos.UserSignUpDTO) (int, dtos.ErrorsDTO) {
+func UserSignUp(user models.User, data dtos.UserSignUpDTO) (int, dtos.ErrorsDTO) {
 	validations := []ValidationFunc{
 		UniqueValueInDB(user, "email", data.Email, "el correo ya se encuentra en uso"),
 		requiredAge(18, user.Birthday, "birthday"),
@@ -21,6 +22,18 @@ func UserValidations(user models.User, data dtos.UserSignUpDTO) (int, dtos.Error
 		}
 	}
 
+	return http.StatusOK, dtos.ErrorsDTO{}
+}
+
+func UserLogin(user models.User, data dtos.UserLoginDTO) (int, dtos.ErrorsDTO) {
+	validators := []ValidationFunc{
+		userActive(user),
+	}
+	for _, v := range validators {
+		if status, errs := v(); status != http.StatusOK {
+			return status, errs
+		}
+	}
 	return http.StatusOK, dtos.ErrorsDTO{}
 }
 
@@ -40,6 +53,17 @@ func requiredAge(requiredAge int8, date time.Time, field string) ValidationFunc 
 			}}
 		}
 
+		return http.StatusOK, dtos.ErrorsDTO{}
+	}
+}
+
+func userActive(user models.User) ValidationFunc {
+	return func() (int, dtos.ErrorsDTO) {
+		if !user.Status && user.Rol.Name == string(constants.User) {
+			return http.StatusUnauthorized, dtos.ErrorsDTO{Errors: []dtos.ErrorDTO{
+				{Error: "no puedes ingresar porque la cuenta esta desactivada"},
+			}}
+		}
 		return http.StatusOK, dtos.ErrorsDTO{}
 	}
 }
