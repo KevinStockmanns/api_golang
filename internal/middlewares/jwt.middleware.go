@@ -19,9 +19,12 @@ func JwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		token := authHeader[7:]
-		if _, err := encryptor.VerifyJWT(token); err != nil {
+		claims, err := encryptor.VerifyJWT(token)
+		if err != nil {
 			return c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{Message: err.Error()})
 		}
+
+		c.Set("tokenClaims", claims)
 		return next(c)
 	}
 }

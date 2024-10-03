@@ -73,7 +73,7 @@ func UserSignUp(c echo.Context) error {
 
 	tx.Commit()
 
-	token, err := encryptor.GenerateJWT(user.Email, user.Rol.Name)
+	token, err := encryptor.GenerateJWT(user.ID, user.Email, user.Rol.Name)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "error al crear token de seguridad")
 	}
@@ -135,7 +135,7 @@ func UserLogin(c echo.Context) error {
 		})
 	}
 
-	token, _ := encryptor.GenerateJWT(user.Email, user.Rol.Name)
+	token, _ := encryptor.GenerateJWT(user.ID, user.Email, user.Rol.Name)
 
 	var userResponse dtos.UserResponseDTO
 	userResponse.Init(user)
@@ -207,5 +207,31 @@ func UserUpdate(c echo.Context) error {
 	var userResponse dtos.UserResponseDTO
 	userResponse.Init(user)
 
+	return c.JSON(http.StatusOK, userResponse)
+}
+
+func GetUser(c echo.Context) error {
+	id := c.Param("id")
+	if !utils.IsInteger(id) {
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Message: "el id debe ser un número entero"})
+	}
+
+	tokenClaims := c.Get("tokenClaims").(*encryptor.Claims)
+	idInt, _ := strconv.ParseUint(id, 10, 32)
+	if tokenClaims.Rol == "USER" && tokenClaims.UserID != uint(idInt) {
+		return c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{Message: "no tienes los permisios requeridos para obtener la información de otro usuario"})
+	}
+
+	var user models.User
+	if err := db.DB.Preload("Rol").First(&user, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return c.JSON(http.StatusNotFound, dtos.ErrorResponse{Message: "no se encontro ninugn usuario con el id ingresado"})
+		} else {
+			return c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Message: "ocurrio un error al obtener el usuario"})
+		}
+	}
+
+	var userResponse dtos.UserResponseDTO
+	userResponse.Init(user)
 	return c.JSON(http.StatusOK, userResponse)
 }
