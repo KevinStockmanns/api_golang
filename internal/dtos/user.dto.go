@@ -63,3 +63,8 @@ type UserUpdateDTO struct {
 	Phone    *string `json:"phone" validate:"omitempty,required,phone"`
 	Rol      *string `json:"rol" validate:"omitempty,required"`
 }
+
+type UserChangePassword struct {
+	ActualPassword string `json:"actualPassword" validate:"required,password,min=8,max=20"`
+	NewPassword    string `json:"newPassword" validate:"required,password,min=8,max=20"`
+}

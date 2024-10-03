@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -65,7 +64,7 @@ func UserSignUp(c echo.Context) error {
 
 	if err := tx.Create(&user).Error; err != nil {
 		tx.Rollback()
-		log.Println(err)
+		// log.Println(err)
 		return c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{
 			Message: "Ocurrio un error al crear el usuario en la base de datos",
 		})
@@ -234,4 +233,36 @@ func GetUser(c echo.Context) error {
 	var userResponse dtos.UserResponseDTO
 	userResponse.Init(user)
 	return c.JSON(http.StatusOK, userResponse)
+}
+
+func UserChangePassword(c echo.Context) error {
+	var userDto dtos.UserChangePassword
+	if err := c.Bind(&userDto); err != nil {
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Message: "ocurrio un error al leer el cuerpo de la petición"})
+	}
+	if errs, ok := validators.ValidateDTOs(userDto); !ok {
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+			Message: "error de validación",
+			Errors:  errs.Errors,
+		})
+	}
+
+	if userDto.ActualPassword == userDto.NewPassword {
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Message: "la clave nueva debe ser diferente a la actual"})
+	}
+	idUser := c.Get("tokenClaims").(*encryptor.Claims)
+
+	var user models.User
+	if err := db.DB.First(&user, idUser.UserID).Error; err != nil {
+		return c.JSON(http.StatusNotFound, dtos.ErrorResponse{Message: "usuario no encontrado"})
+	}
+	if err := encryptor.VerifyPassword(userDto.ActualPassword, user.Password); err != nil {
+		return c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{Message: "credenciales inválidas"})
+	}
+	newPass := encryptor.EncryptPassword(userDto.NewPassword)
+	user.Password = newPass
+	if err := db.DB.Save(&user).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Message: "ocurrio un error al guardar la clave"})
+	}
+	return c.NoContent(http.StatusNoContent)
 }
