@@ -8,6 +8,7 @@ import (
 
 	"github.com/KevinStockmanns/api_golang/internal/constants"
 	"github.com/KevinStockmanns/api_golang/internal/dtos"
+	"github.com/KevinStockmanns/api_golang/internal/encryptor"
 	"github.com/KevinStockmanns/api_golang/internal/models"
 )
 
@@ -29,6 +30,7 @@ func UserSignUp(user models.User, data dtos.UserSignUpDTO) (int, dtos.ErrorsDTO)
 func UserLogin(user models.User, data dtos.UserLoginDTO) (int, dtos.ErrorsDTO) {
 	validators := []ValidationFunc{
 		userActive(user),
+		validatePassword(data.Password, user.Password, "password"),
 	}
 	for _, v := range validators {
 		if status, errs := v(); status != http.StatusOK {
@@ -44,7 +46,7 @@ func UserUpdate(user models.User, data dtos.UserUpdateDTO, idSent uint) (int, dt
 		validateRol(user, data.Rol),
 		UniqueValueInDB(user, "email", data.Email, "el correo ya se encuentra en uso"),
 		OneDataRequired(data, "el requerido al menos un dato para actualizar el usuario"),
-		requiredAge(18, data.Birthday, "brithday"),
+		requiredAge(18, data.Birthday, "birthday"),
 	}
 	for _, v := range validators {
 		if status, errors := v(); status != http.StatusOK {
@@ -54,16 +56,23 @@ func UserUpdate(user models.User, data dtos.UserUpdateDTO, idSent uint) (int, dt
 	return http.StatusOK, dtos.ErrorsDTO{}
 }
 
+func validatePassword(password string, hash string, field string) ValidationFunc {
+	return func() (int, dtos.ErrorsDTO) {
+		if err := encryptor.VerifyPassword(password, hash); err != nil {
+			return http.StatusUnauthorized, dtos.ErrorsDTO{Errors: []dtos.ErrorDTO{{Field: field, Error: "credenciales inválidas"}}}
+		}
+		return http.StatusOK, dtos.ErrorsDTO{}
+	}
+}
+
 func requiredAge(requiredAge int8, initTime *string, field string) ValidationFunc {
 	return func() (int, dtos.ErrorsDTO) {
 		if initTime == nil {
 			return http.StatusOK, dtos.ErrorsDTO{}
 		}
-		fmt.Println("Fecha recibida:", *initTime)
 
 		date, err := time.Parse("2006-01-02", *initTime)
 		if err != nil {
-			fmt.Println(err)
 			return http.StatusBadRequest, dtos.ErrorsDTO{Errors: []dtos.ErrorDTO{
 				{Field: field, Error: fmt.Sprintf("fecha inválida: %s. Formato esperado: YYYY-MM-DD", *initTime)},
 			}}
