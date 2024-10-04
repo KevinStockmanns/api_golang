@@ -21,4 +21,5 @@ func ConnectDB() {
 }
 func InitMigrations() {
 	DB.AutoMigrate(models.User{}, models.Rol{})
+	DB.AutoMigrate(models.Product{}, models.Version{})
 }

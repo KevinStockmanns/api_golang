@@ -67,6 +67,10 @@ func ValidateDTOs(model interface{}) (dtos.ErrorsDTO, bool) {
 				{
 					errorDto.Error = "el campo acepta, letras, números y caracteres especiales: ('_', '-' )"
 				}
+			case "gt":
+				errorDto.Error = fmt.Sprintf("el cambo debe ser mayor que %s", e.Param())
+			case "gte":
+				errorDto.Error = fmt.Sprintf("el cambo debe ser mayor o igual que %s", e.Param())
 			default:
 				errorDto.Error = "Dato inválido"
 
