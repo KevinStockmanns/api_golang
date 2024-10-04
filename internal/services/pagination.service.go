@@ -1,6 +1,10 @@
 package services
 
-import "gorm.io/gorm"
+import (
+	"math"
+
+	"gorm.io/gorm"
+)
 
 // Pagination es una estructura genérica que permite la paginación de cualquier tipo T
 type Pagination[T any] struct {
@@ -22,11 +26,15 @@ func NewPagination[T any](page, size, limit int) *Pagination[T] {
 }
 
 // RunQuery es un método que ejecuta la consulta y llena los datos en la estructura Pagination
-func (p *Pagination[T]) RunQuery(db *gorm.DB, condition string, values []interface{}, order string) error {
+func (p *Pagination[T]) RunQuery(db *gorm.DB, condition string, values []interface{}, order string, preloads []string) error {
 	var total int64
 	offset := (p.Page - 1) * p.Size
 
 	query := db.Model(&p.Content)
+
+	for _, preload := range preloads {
+		query.Preload(preload)
+	}
 
 	// Aplicamos la condición si existe
 	if condition != "" {
@@ -50,6 +58,7 @@ func (p *Pagination[T]) RunQuery(db *gorm.DB, condition string, values []interfa
 
 	// Asignamos los resultados a la estructura Pagination
 	p.Total = total
+	p.TotalPages = int64(math.Ceil(float64(total) / float64(p.Size)))
 
 	return nil
 }

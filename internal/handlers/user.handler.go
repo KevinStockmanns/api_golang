@@ -128,12 +128,6 @@ func UserLogin(c echo.Context) error {
 		})
 	}
 
-	if err := encryptor.VerifyPassword(userDto.Password, user.Password); err != nil {
-		return c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{
-			Message: "credenciales inválidas",
-		})
-	}
-
 	token, _ := encryptor.GenerateJWT(user.ID, user.Email, user.Rol.Name)
 
 	var userResponse dtos.UserResponseDTO
@@ -268,24 +262,39 @@ func UserChangePassword(c echo.Context) error {
 }
 
 func UserList(c echo.Context) error {
-	// sizeParam := c.QueryParam("size")
-	// pageParam := c.QueryParam("page")
+	sizeParam := c.QueryParam("size")
+	pageParam := c.QueryParam("page")
 
-	// size := 10
-	// page := 1
+	size := 10
+	page := 1
 
-	// if sizeParam != "" {
-	// 	if s, err := strconv.Atoi(sizeParam); err == nil && s > 0 {
-	// 		size = s
-	// 	}
-	// }
-	// if pageParam != "" {
-	// 	if p, err := strconv.Atoi(pageParam); err == nil && p > 0 {
-	// 		page = p
-	// 	}
-	// }
+	if sizeParam != "" {
+		if s, err := strconv.Atoi(sizeParam); err == nil && s > 0 {
+			size = s
+		}
+	}
+	if pageParam != "" {
+		if p, err := strconv.Atoi(pageParam); err == nil && p > 0 {
+			page = p
+		}
+	}
 	// var users []models.User
-	pagination := services.NewPagination[models.User](1, 10, 10)
-	pagination.RunQuery(db.DB, "status = ?", []interface{}{true}, "name ASC")
-	return nil
+
+	pagination := services.NewPagination[models.User](page, size, 10)
+	pagination.RunQuery(db.DB, "status = ?", []interface{}{true}, "name ASC", []string{"Rol"})
+
+	userDTOs := make([]dtos.UserResponseDTO, len(pagination.Content))
+	for i, user := range pagination.Content {
+		var userDto dtos.UserResponseDTO
+		userDto.Init(user)
+		userDTOs[i] = userDto
+	}
+
+	return c.JSON(http.StatusOK, services.Pagination[dtos.UserResponseDTO]{
+		Page:       pagination.Page,
+		Size:       pagination.Size,
+		Total:      pagination.Total,
+		TotalPages: pagination.TotalPages,
+		Content:    userDTOs,
+	})
 }
