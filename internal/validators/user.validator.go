@@ -14,7 +14,7 @@ import (
 func UserSignUp(user models.User, data dtos.UserSignUpDTO) (int, dtos.ErrorsDTO) {
 	validations := []ValidationFunc{
 		UniqueValueInDB(user, "email", &data.Email, "el correo ya se encuentra en uso"),
-		requiredAge(18, user.Birthday, "birthday"),
+		requiredAge(18, &data.Birthday, "birthday"),
 	}
 
 	for _, v := range validations {
@@ -44,6 +44,7 @@ func UserUpdate(user models.User, data dtos.UserUpdateDTO, idSent uint) (int, dt
 		validateRol(user, data.Rol),
 		UniqueValueInDB(user, "email", data.Email, "el correo ya se encuentra en uso"),
 		OneDataRequired(data, "el requerido al menos un dato para actualizar el usuario"),
+		requiredAge(18, data.Birthday, "brithday"),
 	}
 	for _, v := range validators {
 		if status, errors := v(); status != http.StatusOK {
@@ -53,8 +54,20 @@ func UserUpdate(user models.User, data dtos.UserUpdateDTO, idSent uint) (int, dt
 	return http.StatusOK, dtos.ErrorsDTO{}
 }
 
-func requiredAge(requiredAge int8, date time.Time, field string) ValidationFunc {
+func requiredAge(requiredAge int8, initTime *string, field string) ValidationFunc {
 	return func() (int, dtos.ErrorsDTO) {
+		if initTime == nil {
+			return http.StatusOK, dtos.ErrorsDTO{}
+		}
+		fmt.Println("Fecha recibida:", *initTime)
+
+		date, err := time.Parse("2006-01-02", *initTime)
+		if err != nil {
+			fmt.Println(err)
+			return http.StatusBadRequest, dtos.ErrorsDTO{Errors: []dtos.ErrorDTO{
+				{Field: field, Error: fmt.Sprintf("fecha inválida: %s. Formato esperado: YYYY-MM-DD", *initTime)},
+			}}
+		}
 
 		now := time.Now()
 		age := int8(now.Year() - date.Year())
