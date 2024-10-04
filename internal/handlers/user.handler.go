@@ -266,3 +266,26 @@ func UserChangePassword(c echo.Context) error {
 	}
 	return c.NoContent(http.StatusNoContent)
 }
+
+func UserList(c echo.Context) error {
+	// sizeParam := c.QueryParam("size")
+	// pageParam := c.QueryParam("page")
+
+	// size := 10
+	// page := 1
+
+	// if sizeParam != "" {
+	// 	if s, err := strconv.Atoi(sizeParam); err == nil && s > 0 {
+	// 		size = s
+	// 	}
+	// }
+	// if pageParam != "" {
+	// 	if p, err := strconv.Atoi(pageParam); err == nil && p > 0 {
+	// 		page = p
+	// 	}
+	// }
+	// var users []models.User
+	pagination := services.NewPagination[models.User](1, 10, 10)
+	pagination.RunQuery(db.DB, "status = ?", []interface{}{true}, "name ASC")
+	return nil
+}
