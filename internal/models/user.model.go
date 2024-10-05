@@ -35,7 +35,7 @@ func (u *User) IsAdmin() bool {
 
 func (u *User) Update(data dtos.UserUpdateDTO) {
 	if data.Birthday != nil {
-		bDay, _ := time.Parse("2000-01-02", *data.Birthday)
+		bDay, _ := time.Parse("2006-01-02", *data.Birthday)
 		u.Birthday = bDay
 	}
 	if data.Email != nil {

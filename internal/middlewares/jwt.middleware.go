@@ -27,10 +27,10 @@ func JwtMiddleware(allowedRoles ...string) echo.MiddlewareFunc {
 			c.Set("tokenClaims", claims)
 
 			if len(allowedRoles) > 0 {
-				userRol := claims.Rol
+				rolToken := claims.Rol
 
-				for _, userRole := range userRol {
-					if userRole == userRole {
+				for _, userRole := range allowedRoles {
+					if rolToken == userRole {
 						return next(c)
 					}
 				}
