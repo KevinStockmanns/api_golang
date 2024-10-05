@@ -40,5 +40,8 @@ func ProductPostHandler(c echo.Context) error {
 
 	tx.Commit()
 
+	var productResponse dtos.ProductResponseDTO
+	productResponse.Init(product)
+
 	return c.JSON(http.StatusOK, product)
 }

@@ -35,3 +35,8 @@ func (p *Product) Create(data dtos.ProductCreateDTO) {
 func (p *Product) Normalize() {
 	p.Name = strings.ToTitle(strings.TrimSpace(p.Name))
 }
+
+func (p Product) GetID() uint            { return p.ID }
+func (p Product) GetName() string        { return p.Name }
+func (p Product) GetStatus() bool        { return p.Status }
+func (p Product) GetVersions() []Version { return p.Versions }
