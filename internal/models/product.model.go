@@ -36,7 +36,13 @@ func (p *Product) Normalize() {
 	p.Name = strings.ToTitle(strings.TrimSpace(p.Name))
 }
 
-func (p Product) GetID() uint            { return p.ID }
-func (p Product) GetName() string        { return p.Name }
-func (p Product) GetStatus() bool        { return p.Status }
-func (p Product) GetVersions() []Version { return p.Versions }
+func (p Product) GetID() uint     { return p.ID }
+func (p Product) GetName() string { return p.Name }
+func (p Product) GetStatus() bool { return p.Status }
+func (p Product) GetVersions() []dtos.VersionModel {
+	versions := make([]dtos.VersionModel, len(p.Versions))
+	for i, version := range p.Versions {
+		versions[i] = version
+	}
+	return versions
+}

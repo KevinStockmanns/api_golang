@@ -6,7 +6,7 @@ type VersionModel interface {
 	GetID() uint
 	GetName() string
 	GetPrice() float64
-	GetResalePrice() float64
+	GetResalePrice() *float64
 	GetStatus() bool
 	GetDate() time.Time
 	GetStock() uint
@@ -24,9 +24,9 @@ type VersionCreateDTO struct {
 type VersionResponseDTO struct {
 	Name        string    `json:"name"`
 	Price       float64   `json:"price"`
-	ResalePrice *float64  `json:"resalePrice,omitempty"`
+	ResalePrice *float64  `json:"resalePrice"`
 	Status      bool      `json:"status"`
 	Date        time.Time `json:"date"`
 	Stock       uint      `json:"stock"`
-	Views       uint      `json:"views,omitempty"`
+	Views       uint      `json:"views"`
 }

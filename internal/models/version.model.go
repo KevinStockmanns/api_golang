@@ -20,6 +20,15 @@ type Version struct {
 	Views       uint
 }
 
+func (v Version) GetID() uint              { return v.ID }
+func (v Version) GetPrice() float64        { return v.Price }
+func (v Version) GetResalePrice() *float64 { return v.ResalePrice }
+func (v Version) GetName() string          { return v.Name }
+func (v Version) GetStatus() bool          { return v.Status }
+func (v Version) GetDate() time.Time       { return v.Date }
+func (v Version) GetStock() uint           { return v.Stock }
+func (v Version) GetViews() uint           { return v.Views }
+
 func (v *Version) Create(data dtos.VersionCreateDTO) {
 	v.Date = time.Now().UTC()
 	v.Name = data.Name

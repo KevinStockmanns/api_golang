@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/KevinStockmanns/api_golang/internal/db"
@@ -43,5 +44,6 @@ func ProductPostHandler(c echo.Context) error {
 	var productResponse dtos.ProductResponseDTO
 	productResponse.Init(product)
 
-	return c.JSON(http.StatusOK, product)
+	c.Response().Header().Set("Location", fmt.Sprintf("/product/%d", product.ID))
+	return c.JSON(http.StatusOK, productResponse)
 }

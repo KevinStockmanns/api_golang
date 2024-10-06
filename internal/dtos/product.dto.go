@@ -4,7 +4,7 @@ type ProductModel interface {
 	GetID() uint
 	GetName() string
 	GetStatus() bool
-	// GetVersions() []VersionModel
+	GetVersions() []VersionModel
 }
 
 type ProductCreateDTO struct {
@@ -24,5 +24,16 @@ func (p *ProductResponseDTO) Init(product ProductModel) {
 	p.ID = product.GetID()
 	p.Name = product.GetName()
 	p.Status = product.GetStatus()
-	// p.Versions = product.GetVersions()
+	p.Versions = make([]VersionResponseDTO, len(product.GetVersions()))
+	for i, v := range product.GetVersions() {
+		p.Versions[i] = VersionResponseDTO{
+			Name:        v.GetName(),
+			Price:       v.GetPrice(),
+			ResalePrice: v.GetResalePrice(),
+			Status:      v.GetStatus(),
+			Date:        v.GetDate(),
+			Stock:       v.GetStock(),
+			Views:       v.GetViews(),
+		}
+	}
 }
