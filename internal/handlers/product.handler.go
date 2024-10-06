@@ -57,7 +57,7 @@ func ProductGet(c echo.Context) error {
 	}
 
 	var product models.Product
-	if err := db.DB.First(&product, idParam).Error; err != nil {
+	if err := db.DB.Preload("Versions").First(&product, idParam).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return c.JSON(http.StatusNotFound, dtos.ErrorResponse{Message: "no se encontro el producto"})
 		} else {
@@ -90,7 +90,7 @@ func ProductViews(c echo.Context) error {
 			Message: "ocurrio un error al obtener las versiones",
 		})
 	}
-	for i, _ := range versions {
+	for i := range versions {
 		versions[i].Views++
 	}
 
