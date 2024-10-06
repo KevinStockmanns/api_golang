@@ -20,6 +20,14 @@ type VersionCreateDTO struct {
 	Status      bool     `json:"status"`
 	Stock       uint     `json:"stock"`
 }
+type VersionUpdateDTO struct {
+	Name        *string  `json:"name" validate:"omitempty,required,objectname,min=3,max=50"`
+	Price       *float64 `json:"price" validate:"omitempty,required,gt=0"`
+	ResalePrice *float64 `json:"resalePrice" validate:"omitempty,gte=0"`
+	Status      *bool    `json:"status"`
+	Stock       *uint    `json:"stock"`
+	Action      string   `json:"action" validate:"required"`
+}
 
 type VersionResponseDTO struct {
 	Name        string    `json:"name"`

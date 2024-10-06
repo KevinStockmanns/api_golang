@@ -13,6 +13,12 @@ type ProductCreateDTO struct {
 	Versions []VersionCreateDTO `json:"versions" validate:"required,min=1,max=6,dive"`
 }
 
+type ProductUpdateDTO struct {
+	Name     *string             `json:"name" validate:"omitempty,required,objectname,min=3,max=50"`
+	Status   *bool               `json:"status"`
+	Versions *[]VersionUpdateDTO `json:"versions" validate:"omitempty,required,min=1,dive"`
+}
+
 type ProductResponseDTO struct {
 	ID       uint                 `json:"id"`
 	Name     string               `json:"name"`

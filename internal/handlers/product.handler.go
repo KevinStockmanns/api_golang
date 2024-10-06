@@ -13,7 +13,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func ProductPostHandler(c echo.Context) error {
+func ProductCreate(c echo.Context) error {
 	var productDto dtos.ProductCreateDTO
 	if err := c.Bind(&productDto); err != nil {
 		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Message: "ocurrio un error al leer el cuerpo de la petición"})
@@ -71,7 +71,7 @@ func ProductGet(c echo.Context) error {
 	return c.JSON(http.StatusOK, productResponse)
 }
 
-func ProductViews(c echo.Context) error {
+func ProductUpViews(c echo.Context) error {
 	var idVersions dtos.VersionUpViewDTO
 	if err := c.Bind(&idVersions); err != nil {
 		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Message: "ocurrio un errro al leer el cuerpo de la petición"})
@@ -104,4 +104,34 @@ func ProductViews(c echo.Context) error {
 	tx.Commit()
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+func ProductUpdate(c echo.Context) error {
+	idParam := c.Param("id")
+	if !utils.IsInteger(idParam) {
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Message: "el id ingresado debe ser un número entero"})
+	}
+	var productDto dtos.ProductUpdateDTO
+	if c.Bind(&productDto) != nil {
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Message: "ocurrio un error al leer el cuerpo de la petición"})
+	}
+	if errs, ok := validators.ValidateDTOs(productDto); !ok {
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+			Message: "error de validación",
+			Errors:  errs.Errors,
+		})
+	}
+
+	var product models.Product
+	tx := db.DB.Begin()
+
+	if err := tx.First(&product, idParam).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return c.JSON(http.StatusNotFound, dtos.ErrorResponse{Message: "no se encontro el producto en la base de datos"})
+		} else {
+			return c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Message: "ocurrio un error al buscar el producto"})
+		}
+	}
+
+	return nil
 }
