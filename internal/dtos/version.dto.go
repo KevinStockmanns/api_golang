@@ -30,3 +30,7 @@ type VersionResponseDTO struct {
 	Stock       uint      `json:"stock"`
 	Views       uint      `json:"views"`
 }
+
+type VersionUpViewDTO struct {
+	IDVersions []uint `json:"idVersions" validate:"required,min=1"`
+}

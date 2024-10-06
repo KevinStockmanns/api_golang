@@ -18,5 +18,8 @@ func RegisterRoutes(e *echo.Echo) {
 	v1.GET("/user", handlers.UserList, middlewares.JwtMiddleware(string(constants.SuperAdmin), string(constants.Admin)))
 	v1.PUT("/user/password", handlers.UserChangePassword, middlewares.JwtMiddleware())
 
+	//Product´s Endpoints
 	v1.POST("/product", handlers.ProductPostHandler, middlewares.JwtMiddleware(string(constants.SuperAdmin), string(constants.Admin)))
+	v1.GET("/product/:id", handlers.GetUser)
+	v1.PATCH("product/views", handlers.ProductViews, middlewares.JwtMiddleware(string(constants.Admin), string(constants.SuperAdmin)))
 }
