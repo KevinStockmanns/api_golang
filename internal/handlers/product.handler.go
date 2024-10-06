@@ -7,6 +7,7 @@ import (
 	"github.com/KevinStockmanns/api_golang/internal/db"
 	"github.com/KevinStockmanns/api_golang/internal/dtos"
 	"github.com/KevinStockmanns/api_golang/internal/models"
+	"github.com/KevinStockmanns/api_golang/internal/services"
 	"github.com/KevinStockmanns/api_golang/internal/utils"
 	"github.com/KevinStockmanns/api_golang/internal/validators"
 	"github.com/labstack/echo/v4"
@@ -132,6 +133,9 @@ func ProductUpdate(c echo.Context) error {
 			return c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Message: "ocurrio un error al buscar el producto"})
 		}
 	}
+	services.ProductUpdate(&product, productDto, tx)
+	var productResponse dtos.ProductResponseDTO
+	productResponse.Init(product)
 
-	return nil
+	return c.JSON(http.StatusOK, productResponse)
 }
