@@ -64,8 +64,11 @@ func ProductUpdate(product *models.Product, productDto dtos.ProductUpdateDTO, db
 		}
 	}
 	product.Normalize()
-
-	if err := db.Save(&product).Error; err != nil {
+	if len(product.Versions) > 6 {
 		db.Rollback()
+	} else {
+		if err := db.Save(&product).Error; err != nil {
+			db.Rollback()
+		}
 	}
 }
