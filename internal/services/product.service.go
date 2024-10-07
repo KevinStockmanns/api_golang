@@ -58,6 +58,8 @@ func ProductUpdate(product *models.Product, productDto dtos.ProductUpdateDTO, db
 						if vDto.Action == string(constants.Delete) {
 							product.Versions[i].Status = false
 						}
+
+						db.Save(product.Versions[i])
 					}
 				}
 			}

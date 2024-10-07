@@ -99,11 +99,6 @@ func oneVersionActiveUpdate(product models.Product, productDto dtos.ProductUpdat
 	}
 }
 
-type versionDTO interface {
-	GetResalePrice() *float64
-	GetPrice() *float64
-}
-
 func validatePricesCreate(versions []dtos.VersionCreateDTO) ValidationFunc {
 	return func() (int, dtos.ErrorsDTO) {
 		for i, vDto := range versions {

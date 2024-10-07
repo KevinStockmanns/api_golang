@@ -126,14 +126,24 @@ func ProductUpdate(c echo.Context) error {
 	var product models.Product
 	tx := db.DB.Begin()
 
-	if err := tx.First(&product, idParam).Error; err != nil {
+	if err := tx.Preload("Versions").First(&product, idParam).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return c.JSON(http.StatusNotFound, dtos.ErrorResponse{Message: "no se encontro el producto en la base de datos"})
 		} else {
 			return c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Message: "ocurrio un error al buscar el producto"})
 		}
 	}
+
+	if status, errs := validators.ProductUpdate(product, productDto); status != http.StatusOK {
+		return c.JSON(status, dtos.ErrorResponse{
+			Message: "error de validación",
+			Errors:  errs.Errors,
+		})
+	}
+
 	services.ProductUpdate(&product, productDto, tx)
+
+	tx.Commit()
 	var productResponse dtos.ProductResponseDTO
 	productResponse.Init(product)
 
