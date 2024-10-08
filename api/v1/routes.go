@@ -17,16 +17,16 @@ func RegisterRoutes(e *echo.Echo) {
 	// User´s Endpoints
 	v1.POST("/user/signup", handlers.UserSignUp)
 	v1.POST("/user/login", handlers.UserLogin)
-	v1.PUT("/user/:id", handlers.UserUpdate, middlewares.JwtMiddleware())
-	v1.GET("/user/:id", handlers.GetUser, middlewares.JwtMiddleware())
-	v1.GET("/user", handlers.UserList, middlewares.JwtMiddleware(admins...))
-	v1.PUT("/user/password", handlers.UserChangePassword, middlewares.JwtMiddleware())
+	v1.PUT("/user/:id", handlers.UserUpdate, middlewares.JwtMiddleware(true))
+	v1.GET("/user/:id", handlers.GetUser, middlewares.JwtMiddleware(true))
+	v1.GET("/user", handlers.UserList, middlewares.JwtMiddleware(true, admins...))
+	v1.PUT("/user/password", handlers.UserChangePassword, middlewares.JwtMiddleware(true))
 
 	//Product´s Endpoints
-	v1.POST("/product", handlers.ProductCreate, middlewares.JwtMiddleware(admins...))
+	v1.POST("/product", handlers.ProductCreate, middlewares.JwtMiddleware(true, admins...))
 	v1.GET("/product/:id", handlers.ProductGet)
-	v1.GET("/product", handlers.ProductList)
-	v1.PATCH("product/views", handlers.ProductUpViews, middlewares.JwtMiddleware(admins...))
-	v1.PUT("/product/:id", handlers.ProductUpdate, middlewares.JwtMiddleware(admins...))
-	v1.DELETE("/product/:id", handlers.ProductDelete, middlewares.JwtMiddleware(admins...))
+	v1.GET("/product", handlers.ProductList, middlewares.JwtMiddleware(false))
+	v1.PATCH("product/views", handlers.ProductUpViews, middlewares.JwtMiddleware(true, admins...))
+	v1.PUT("/product/:id", handlers.ProductUpdate, middlewares.JwtMiddleware(true, admins...))
+	v1.DELETE("/product/:id", handlers.ProductDelete, middlewares.JwtMiddleware(true, admins...))
 }

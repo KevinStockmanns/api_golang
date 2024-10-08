@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/KevinStockmanns/api_golang/internal/constants"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -61,4 +62,8 @@ func VerifyJWT(tokenString string) (*Claims, error) {
 	}
 
 	return nil, errors.New("token no válido")
+}
+
+func IsAdmin(claims Claims) bool {
+	return claims.Rol == string(constants.Admin) || claims.Rol == string(constants.SuperAdmin)
 }

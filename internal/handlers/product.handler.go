@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/KevinStockmanns/api_golang/internal/db"
 	"github.com/KevinStockmanns/api_golang/internal/dtos"
+	"github.com/KevinStockmanns/api_golang/internal/encryptor"
 	"github.com/KevinStockmanns/api_golang/internal/models"
 	"github.com/KevinStockmanns/api_golang/internal/services"
 	"github.com/KevinStockmanns/api_golang/internal/utils"
@@ -77,14 +79,37 @@ func ProductList(c echo.Context) error {
 	page := 1
 	size := 10
 	limit := 10
+	sort := "name"
+	order := "ASC"
+	status := true
 
-	if c.Param("size") != "" {
-		if s, err := strconv.Atoi(c.Param("size")); err == nil && s > 0 {
+	if statusParam := strings.ToLower(c.QueryParam("status")); statusParam == "false" {
+		claims, ok := c.Get("tokenClaims").(*encryptor.Claims)
+		if !ok || claims == nil {
+			return c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{Message: "autorización requerida para ver productos desactivados"})
+		} else {
+			if !encryptor.IsAdmin(*claims) {
+				return c.JSON(http.StatusForbidden, dtos.ErrorResponse{Message: "no tienes los permisos necesarios para ver los productos desactivados"})
+			}
+		}
+
+		status = false
+	}
+	if strings.ToUpper(c.QueryParam("order")) == "ASC" || strings.ToUpper(c.QueryParam("order")) == "DESC" {
+		order = strings.ToUpper(c.QueryParam("order"))
+	}
+	if sortParam := strings.ToLower(c.QueryParam("sort")); sortParam != "" {
+		if sortParam == "id" || sortParam == "views" || sortParam == "stock" || sortParam == "date" {
+			sort = sortParam
+		}
+	}
+	if c.QueryParam("size") != "" {
+		if s, err := strconv.Atoi(c.QueryParam("size")); err == nil && s > 0 {
 			size = s
 		}
 	}
-	if c.Param("page") != "" {
-		if p, err := strconv.Atoi(c.Param("page")); err == nil && p > 0 {
+	if c.QueryParam("page") != "" {
+		if p, err := strconv.Atoi(c.QueryParam("page")); err == nil && p > 0 {
 			page = p
 		}
 	}
@@ -93,7 +118,7 @@ func ProductList(c echo.Context) error {
 	}
 
 	pagination := services.NewPagination[models.Product](page, size, limit)
-	pagination.RunQuery(db.DB, "status = ?", []interface{}{true}, "name ASC", []string{"Versions"})
+	pagination.RunQuery(db.DB, "status = ?", []interface{}{status}, fmt.Sprintf("%s %s", sort, order), []string{"Versions"})
 
 	response := make([]dtos.ProductResponseDTO, len(pagination.Content))
 	for i, p := range pagination.Content {
