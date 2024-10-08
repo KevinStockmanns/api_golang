@@ -25,6 +25,7 @@ func RegisterRoutes(e *echo.Echo) {
 	//Product´s Endpoints
 	v1.POST("/product", handlers.ProductCreate, middlewares.JwtMiddleware(admins...))
 	v1.GET("/product/:id", handlers.ProductGet)
+	v1.GET("/product", handlers.ProductList)
 	v1.PATCH("product/views", handlers.ProductUpViews, middlewares.JwtMiddleware(admins...))
 	v1.PUT("/product/:id", handlers.ProductUpdate, middlewares.JwtMiddleware(admins...))
 	v1.DELETE("/product/:id", handlers.ProductDelete, middlewares.JwtMiddleware(admins...))

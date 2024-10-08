@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/KevinStockmanns/api_golang/internal/db"
 	"github.com/KevinStockmanns/api_golang/internal/dtos"
@@ -70,6 +71,44 @@ func ProductGet(c echo.Context) error {
 	productResponse.Init(product)
 
 	return c.JSON(http.StatusOK, productResponse)
+}
+
+func ProductList(c echo.Context) error {
+	page := 1
+	size := 10
+	limit := 10
+
+	if c.Param("size") != "" {
+		if s, err := strconv.Atoi(c.Param("size")); err == nil && s > 0 {
+			size = s
+		}
+	}
+	if c.Param("page") != "" {
+		if p, err := strconv.Atoi(c.Param("page")); err == nil && p > 0 {
+			page = p
+		}
+	}
+	if size > limit {
+		size = limit
+	}
+
+	pagination := services.NewPagination[models.Product](page, size, limit)
+	pagination.RunQuery(db.DB, "status = ?", []interface{}{true}, "name ASC", []string{"Versions"})
+
+	response := make([]dtos.ProductResponseDTO, len(pagination.Content))
+	for i, p := range pagination.Content {
+		var pResponse dtos.ProductResponseDTO
+		pResponse.Init(p)
+		response[i] = pResponse
+	}
+
+	return c.JSON(http.StatusOK, services.Pagination[dtos.ProductResponseDTO]{
+		Page:       pagination.Page,
+		Size:       pagination.Size,
+		Total:      pagination.Total,
+		TotalPages: pagination.TotalPages,
+		Content:    response,
+	})
 }
 
 func ProductUpViews(c echo.Context) error {
