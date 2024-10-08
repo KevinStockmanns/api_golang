@@ -149,3 +149,23 @@ func ProductUpdate(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, productResponse)
 }
+
+func ProductDelete(c echo.Context) error {
+	idParam := c.Param("id")
+	if !utils.IsInteger(idParam) {
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Message: "el id ingresado debe ser un número entero"})
+	}
+
+	var product models.Product
+	if err := db.DB.First(&product).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Message: "no se encontro el producto en la base de datos"})
+		} else {
+			return c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Message: "ocurrio un error al buscar el producto"})
+		}
+	}
+
+	product.Status = false
+	db.DB.Save(&product)
+	return c.NoContent(http.StatusNoContent)
+}
