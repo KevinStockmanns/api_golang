@@ -9,15 +9,16 @@ import (
 )
 
 type Version struct {
-	ID          uint `gorm:"primaryKey"`
-	ProductId   uint
-	Name        string   `gorm:"varchar(50)"`
-	Price       float64  `gorm:"type:decimal(10,2)"`
-	ResalePrice *float64 `gorm:"type:decimal(10,2)"`
-	Status      bool
-	Date        time.Time
-	Stock       uint
-	Views       uint
+	ID            uint `gorm:"primaryKey"`
+	ProductId     uint
+	Name          string   `gorm:"varchar(50)"`
+	Price         float64  `gorm:"type:decimal(10,2)"`
+	ResalePrice   *float64 `gorm:"type:decimal(10,2)"`
+	Status        bool
+	Date          time.Time
+	Stock         uint
+	Views         uint
+	PricesHistory []PriceHistory
 }
 
 func (v Version) GetID() uint              { return v.ID }
