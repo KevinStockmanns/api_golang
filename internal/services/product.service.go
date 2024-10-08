@@ -38,6 +38,9 @@ func ProductUpdate(product *models.Product, productDto dtos.ProductUpdateDTO, db
 				for i := range product.Versions {
 					if *vDto.ID == product.Versions[i].ID {
 						if vDto.Action == string(constants.Update) {
+							if vDto.Price != nil || vDto.ResalePrice != nil {
+								RegisterPrice(product.Versions[i], db)
+							}
 							if vDto.Name != nil {
 								product.Versions[i].Name = *vDto.Name
 							}
