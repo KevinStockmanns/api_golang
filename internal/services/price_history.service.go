@@ -22,3 +22,7 @@ func RegisterPrice(version models.Version, db *gorm.DB) *models.PriceHistory {
 
 	return &historyItem
 }
+
+func GetHistory(db *gorm.DB, history *[]models.PriceHistory, initTime time.Time, endTime time.Time, id string) error {
+	return db.Model(history).Where("date >= ? && date <= ? && version_id = ?", initTime, endTime, id).Find(&history).Error
+}

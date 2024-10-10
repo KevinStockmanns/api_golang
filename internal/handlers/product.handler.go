@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/KevinStockmanns/api_golang/internal/db"
 	"github.com/KevinStockmanns/api_golang/internal/dtos"
@@ -232,4 +233,26 @@ func ProductDelete(c echo.Context) error {
 	product.Status = false
 	db.DB.Save(&product)
 	return c.NoContent(http.StatusNoContent)
+}
+
+func ProductPriceHistoyList(c echo.Context) error {
+	idParam := c.Param("id")
+	if !utils.IsInteger(idParam) {
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Message: "el id ingresado debe ser un número entero"})
+	}
+
+	var dto dtos.ProductPriceHistoryDTO
+	if c.Bind(&dto) != nil {
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Message: "ocurrio un error al leer el cuerpo de la petición"})
+	}
+	if errs, ok := validators.ValidateDTOs(dto); !ok {
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Message: "error de validación", Errors: errs.Errors})
+	}
+
+	var history []models.PriceHistory
+	if err := services.GetHistory(db.DB, &history, time.Now(), time.Now(), idParam); err != nil {
+		return c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Message: "ocurrio un error al buscar el historial de precios"})
+	}
+
+	return nil
 }
