@@ -47,6 +47,18 @@ func ProductUpdate(product models.Product, data dtos.ProductUpdateDTO) (int, dto
 	return http.StatusOK, dtos.ErrorsDTO{}
 }
 
+func ProductChangePrices(data dtos.ProductChangePrice) (int, dtos.ErrorsDTO) {
+	validators := []ValidationFunc{
+		validatePricesChange(data),
+	}
+	for _, v := range validators {
+		if status, err := v(); status != http.StatusOK {
+			return status, err
+		}
+	}
+	return http.StatusOK, dtos.ErrorsDTO{}
+}
+
 func oneVersionActiveCreate(data dtos.ProductCreateDTO, statusDto *bool) ValidationFunc {
 	return func() (int, dtos.ErrorsDTO) {
 		if statusDto != nil && *statusDto {
@@ -127,6 +139,20 @@ func validatePricesUpdate(version []models.Version, versionDto *[]dtos.VersionUp
 						}
 					}
 				}
+			}
+		}
+		return http.StatusOK, dtos.ErrorsDTO{}
+	}
+}
+
+func validatePricesChange(data dtos.ProductChangePrice) ValidationFunc {
+	return func() (int, dtos.ErrorsDTO) {
+		for i, vDto := range data.Versions {
+			if vDto.Price == nil && vDto.ResalePrice == nil {
+				return http.StatusBadRequest, dtos.ErrorsDTO{Errors: []dtos.ErrorDTO{{Field: fmt.Sprintf("versions[%d]", i), Error: "los datos son requeridos"}}}
+			}
+			if vDto.Price != nil && vDto.ResalePrice != nil && *vDto.ResalePrice > *vDto.Price {
+				return http.StatusBadRequest, dtos.ErrorsDTO{Errors: []dtos.ErrorDTO{{Field: fmt.Sprintf("versions[%d].resalePrice", i), Error: "el precio de reventa no puede ser mayor al original"}}}
 			}
 		}
 		return http.StatusOK, dtos.ErrorsDTO{}

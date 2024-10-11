@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/KevinStockmanns/api_golang/internal/constants"
@@ -76,4 +77,34 @@ func ProductUpdate(product *models.Product, productDto dtos.ProductUpdateDTO, db
 			db.Rollback()
 		}
 	}
+}
+
+func ChangeProductsPrice(data dtos.ProductChangePrice, db *gorm.DB) error {
+	var ids []uint
+
+	for _, vDto := range data.Versions {
+		ids = append(ids, vDto.ID)
+	}
+
+	var versions []models.Version
+	if db.Model(versions).Where("id IN ?", ids).Find(&versions).Error != nil {
+		return fmt.Errorf("ocurrio un error al obtener las versiones")
+	}
+
+	for _, vDto := range data.Versions {
+		for _, v := range versions {
+			if vDto.ID == v.ID {
+				RegisterPrice(v, db)
+				if vDto.Price != nil {
+					v.Price = *vDto.Price
+				}
+				if vDto.ResalePrice != nil {
+					v.ResalePrice = vDto.ResalePrice
+				}
+				db.Model(v).Save(&v)
+			}
+		}
+	}
+
+	return nil
 }

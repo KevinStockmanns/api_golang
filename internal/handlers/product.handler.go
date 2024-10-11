@@ -270,3 +270,21 @@ func ProductPriceHistoyList(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, history)
 }
+
+func ProductChangePrice(c echo.Context) error {
+	var dto dtos.ProductChangePrice
+	if c.Bind(&dto) != nil {
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Message: "ocurrio un error al leer el cuerpo de la petición"})
+	}
+	if errs, ok := validators.ValidateDTOs(dto); !ok {
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Message: "error de validación", Errors: errs.Errors})
+	}
+	if status, errs := validators.ProductChangePrices(dto); status != http.StatusOK {
+		return c.JSON(status, dtos.ErrorResponse{Message: "error de validación", Errors: errs.Errors})
+	}
+
+	if err := services.ChangeProductsPrice(dto, db.DB); err != nil {
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Message: err.Error()})
+	}
+	return c.NoContent(http.StatusNoContent)
+}

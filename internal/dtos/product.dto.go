@@ -24,6 +24,10 @@ type ProductPriceHistoryDTO struct {
 	EndTime  string `json:"endTime" validate:"required,date"`
 }
 
+type ProductChangePrice struct {
+	Versions []VersionsChangePrice `json:"versions" validate:"required,min=1,dive"`
+}
+
 type ProductResponseDTO struct {
 	ID       uint                 `json:"id"`
 	Name     string               `json:"name"`
