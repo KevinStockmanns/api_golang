@@ -47,5 +47,5 @@ type VersionUpViewDTO struct {
 type VersionsChangePrice struct {
 	ID          uint     `json:"id" validate:"required"`
 	Price       *float64 `json:"price,omitempty" validate:"omitempty,gt=0"`
-	ResalePrice *float64 `json:"resalePrice,omitempty" validate:"omitempty,required,gte=0"`
+	ResalePrice *float64 `json:"resalePrice,omitempty" validate:"omitempty,gte=0"`
 }

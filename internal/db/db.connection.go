@@ -23,4 +23,5 @@ func InitMigrations() {
 	DB.AutoMigrate(models.User{}, models.Rol{})
 	DB.AutoMigrate(models.Product{}, models.Version{})
 	DB.AutoMigrate(models.PriceHistory{})
+	DB.AutoMigrate(models.Order{}, models.OrderItem{})
 }
