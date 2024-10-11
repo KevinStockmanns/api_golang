@@ -249,10 +249,24 @@ func ProductPriceHistoyList(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Message: "error de validación", Errors: errs.Errors})
 	}
 
+	var initTime time.Time
+	var endTime time.Time
+	if time, err := time.Parse("2006-01-02", dto.InitTime); err != nil {
+		fmt.Println(err)
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Message: "ocurrio un error al leer la fecha ingresada"})
+	} else {
+		initTime = time
+	}
+	if time, err := time.Parse("2006-01-02", dto.EndTime); err != nil {
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Message: "ocurrio un error al leer la fecha ingresada"})
+	} else {
+		endTime = time
+	}
+
 	var history []models.PriceHistory
-	if err := services.GetHistory(db.DB, &history, time.Now(), time.Now(), idParam); err != nil {
+	if err := services.GetHistory(db.DB, &history, initTime, endTime, idParam); err != nil {
 		return c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Message: "ocurrio un error al buscar el historial de precios"})
 	}
 
-	return nil
+	return c.JSON(http.StatusOK, history)
 }
